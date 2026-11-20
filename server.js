@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const PHOTO_DIR = '/tmp/marble-coast-photos';
+const PHOTO_DIR = '/tmp/marble-rush-photos';
 const MAX_PHOTOS = 120;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -218,7 +218,7 @@ app.get('/api/photos/:id/image', (req, res) => {
     return res.status(404).json({ error: 'Photo not found or expired.' });
   }
   res.setHeader('Content-Type', 'image/png');
-  res.setHeader('Content-Disposition', `inline; filename="marble-coast-${record.id}.png"`);
+  res.setHeader('Content-Disposition', `inline; filename="marble-rush-${record.id}.png"`);
   res.setHeader('Cache-Control', 'public, max-age=86400');
   return res.send(record.buffer);
 });
@@ -234,7 +234,7 @@ app.get('/photo/:id', (req, res) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Photo Not Found - Marble Coast</title>
+  <title>Photo Not Found - Marble Rush</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at top,#0e2d61,#07152e 70%);color:#fff;font-family:'Arial Black',Arial,sans-serif;text-align:center}
@@ -247,8 +247,8 @@ app.get('/photo/:id', (req, res) => {
 <body>
   <div class="card">
     <h1>PHOTO EXPIRED</h1>
-    <p>This Marble Coast arcade photo is no longer available on the server. Take a new photo after your next run!</p>
-    <a href="/">PLAY MARBLE COAST</a>
+    <p>This Marble Rush arcade photo is no longer available on the server. Take a new photo after your next run!</p>
+    <a href="/">PLAY MARBLE RUSH</a>
   </div>
 </body>
 </html>`);
@@ -265,7 +265,7 @@ app.get('/photo/:id', (req, res) => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>${safeName} - Marble Coast Photo</title>
+  <title>${safeName} - Marble Rush Photo</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -358,16 +358,16 @@ app.get('/photo/:id', (req, res) => {
 </head>
 <body>
   <main class="wrap">
-    <div class="brand">MARBLE <span>COAST</span></div>
+    <div class="brand">MARBLE <span>RUSH</span></div>
     <div class="meta">
       <span class="pill">${safeName}</span>
       ${safeTime ? `<span class="pill">${safeTime}</span>` : ''}
       ${safeRank ? `<span class="pill gold">TOP 10 &bull; ${safeRank}</span>` : ''}
     </div>
     <div class="frame">
-      <img src="${imagePath}" alt="Marble Coast Arcade Photo for ${safeName}" />
+      <img src="${imagePath}" alt="Marble Rush Arcade Photo for ${safeName}" />
     </div>
-    <a class="dl" href="${imagePath}" download="marble-coast-${safeId}.png">DOWNLOAD PHOTO</a>
+    <a class="dl" href="${imagePath}" download="marble-rush-${safeId}.png">DOWNLOAD PHOTO</a>
     <p class="hint">On iPhone or Android, tap <strong>DOWNLOAD PHOTO</strong> or press and hold the photo above to save it directly to your camera roll. No sign-in needed!</p>
   </main>
 </body>
@@ -390,7 +390,7 @@ function buildEmailContent({ playerName, finalTime, rank, shareUrl }) {
   const html = `
   <div style="background:#040d1d;padding:28px 16px;font-family:Arial,Helvetica,sans-serif;color:#ffffff;text-align:center;">
     <div style="max-width:520px;margin:0 auto;background:#07152e;border:2px solid #22d3ee;border-radius:20px;padding:28px 22px;">
-      <h1 style="margin:0 0 6px;font-size:28px;letter-spacing:1px;color:#ffffff;">MARBLE <span style="color:#facc15;">COAST</span></h1>
+      <h1 style="margin:0 0 6px;font-size:28px;letter-spacing:1px;color:#ffffff;">MARBLE <span style="color:#facc15;">RUSH</span></h1>
       <p style="margin:0 0 18px;color:#67e8f9;font-size:14px;">YOUR ARCADE PHOTO IS ATTACHED!</p>
       <div style="background:#0b2147;border:1px solid #22d3ee;border-radius:14px;padding:16px;margin-bottom:16px;">
         <p style="margin:0;font-size:20px;font-weight:800;color:#ffffff;">${safeName}</p>
@@ -399,13 +399,13 @@ function buildEmailContent({ playerName, finalTime, rank, shareUrl }) {
       </div>
       ${buttonHtml}
       <p style="margin:14px 0 0;font-size:13px;color:#bae6fd;line-height:1.5;">
-        Your Marble Coast photo card is attached as a PNG image.${validShareUrl ? ' You can also tap the button above to open and save it on any device.' : ''}
+        Your Marble Rush photo card is attached as a PNG image.${validShareUrl ? ' You can also tap the button above to open and save it on any device.' : ''}
       </p>
     </div>
   </div>`;
 
   const textLines = [
-    'MARBLE COAST - Your Arcade Photo',
+    'MARBLE RUSH - Your Arcade Photo',
     `Player: ${playerName || 'PLAYER'}`,
     `Final Time: ${finalTime || '--:--.--'}`,
     rank ? `Rank: Top 10 #${rank}` : null,
@@ -414,7 +414,7 @@ function buildEmailContent({ playerName, finalTime, rank, shareUrl }) {
   ].filter(Boolean);
 
   return {
-    subject: `Your Marble Coast Photo (${finalTime || 'Arcade Run'})`,
+    subject: `Your Marble Rush Photo (${finalTime || 'Arcade Run'})`,
     html,
     text: textLines.join('\n'),
   };
@@ -437,7 +437,7 @@ app.post('/api/send-email', async (req, res) => {
     const cleanName = sanitizeText(playerName, 'PLAYER', 24);
     const cleanTime = sanitizeText(finalTime, '', 20);
     const cleanRank = sanitizeRank(rank);
-    const filename = `marble-coast-${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'photo'}.${parsed.ext}`;
+    const filename = `marble-rush-${cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'photo'}.${parsed.ext}`;
     const emailContent = buildEmailContent({
       playerName: cleanName,
       finalTime: cleanTime,
@@ -573,5 +573,5 @@ app.get('/', (_req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Marble Coast server running on port ${PORT}`);
+  console.log(`Marble Rush server running on port ${PORT}`);
 });

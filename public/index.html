@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Marble Coast</title>
+<html lang="en"><head><meta charset="utf-8"><title>Marble Rush</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -116,7 +116,7 @@ text-shadow:0 1px #0cc,0 2px #0bb,0 3px #0aa,0 4px #099,0 5px #088,0 6px #077,0 
 </style></head>
 <body class="s-attract">
 <canvas id="gl"></canvas>
-<div id="title" class="o"><span>MARBLE</span><span>COAST</span></div>
+<div id="title" class="o"><span>MARBLE</span><span>RUSH</span></div>
 <div id="prompt" class="o sh">STEP IN FRONT OF CAMERA TO PLAY</div>
 <canvas id="cam" width="320" height="240"></canvas><div id="note"></div>
 <div id="hud">
@@ -486,7 +486,7 @@ function drawPhoto(num){
 $('nm').oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9 ]/g,'');fT_=0};
 $('sub').onclick=submit;$('again').onclick=()=>toAttract(true);
 $('phyes').onclick=startSnap;$('phre').onclick=startSnap;$('phno').onclick=$('phdn').onclick=()=>showBoard(meIdx);
-$('phdl').onclick=()=>{fT_=0;const a=document.createElement('a');a.href=$('phc').toDataURL('image/png');a.download='marble-coast-'+pName.toLowerCase().replace(/\s+/g,'-')+'.png';a.click()};
+$('phdl').onclick=()=>{fT_=0;const a=document.createElement('a');a.href=$('phc').toDataURL('image/png');a.download='marble-rush-'+pName.toLowerCase().replace(/\s+/g,'-')+'.png';a.click()};
 
 /* ---------- INPUT ---------- */
 function fs(){const e=document.documentElement;if(!document.fullscreenElement&&e.requestFullscreen)e.requestFullscreen().catch(()=>{})}
