@@ -1,0 +1,6 @@
+{
+  "name": "Marble Coast",
+  "description": "3D arcade marble racing game with webcam pose tracking, QR code photo downloads, and email photo sharing.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
