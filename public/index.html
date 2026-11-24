@@ -12,13 +12,15 @@ text-shadow:0 1px #0cc,0 2px #0bb,0 3px #0aa,0 4px #099,0 5px #088,0 6px #077,0 
 #title span{display:block}
 #title span+span{color:#ffd400;text-shadow:0 1px #c90,0 2px #b80,0 3px #a70,0 4px #960,0 5px #850,0 6px #740,0 7px #630,0 8px #520,0 9px #410,0 24px 30px rgba(0,0,0,.55)}
 @keyframes fl{0%,100%{transform:perspective(900px) rotateX(10deg) rotateY(-14deg)}50%{transform:perspective(900px) rotateX(6deg) rotateY(14deg) translateY(-2vmin)}}
-#prompt{bottom:7vh;font-size:5.6vmin;color:#ffe14d;display:none;animation:pl 1.2s ease-in-out infinite}
-@keyframes pl{50%{transform:scale(1.06);color:#fff}}
+#start-ui{position:fixed;bottom:4vh;left:0;right:0;display:none;flex-direction:column;align-items:center;gap:1.2vmin;z-index:4;pointer-events:none;text-align:center}
+#prompt{position:static;font-size:3.8vmin;color:#ffe14d;animation:pl 1.4s ease-in-out infinite}
+@keyframes pl{50%{transform:scale(1.04);color:#fff}}
+#start-btn{pointer-events:auto;margin-top:0;font-size:5vmin;padding:1.3vmin 5.5vmin;box-shadow:0 0 3.5vmin rgba(250,204,21,.55),0 .6vmin 2vmin rgba(0,0,0,.45)}
 #cam{position:fixed;width:24vmin;height:18vmin;top:2vmin;right:2vmin;border-radius:2vmin;box-shadow:0 0 4vmin rgba(0,255,255,.45);transition:all .5s;z-index:3;background:#001a2e}
-.s-attract #cam{width:48vmin;height:36vmin;top:50%;right:50%;transform:translate(50%,-40%);box-shadow:0 0 6vmin rgba(0,255,255,.6)}
+.s-attract #cam{width:44vmin;height:33vmin;top:46%;right:50%;transform:translate(50%,-44%);box-shadow:0 0 6vmin rgba(0,255,255,.6)}
 .s-finish #cam{opacity:0}
 #note{position:fixed;top:21vmin;right:2vmin;font-size:2vmin;color:#ffb;z-index:3}
-.s-attract #note{top:calc(50% + 26vmin);right:50%;transform:translateX(50%)}
+.s-attract #note{top:calc(46% + 20vmin);right:50%;transform:translateX(50%)}
 #hud{display:none}
 .s-race #hud,.s-count #hud{display:block}
 #top{top:1.5vh}#timer{font-size:10vmin;line-height:1;letter-spacing:.4vmin}#cpc{font-size:5vmin;color:#7ff}
@@ -112,12 +114,13 @@ text-shadow:0 1px #0cc,0 2px #0bb,0 3px #0aa,0 4px #099,0 5px #088,0 6px #077,0 
 #flash.pop{animation:fl2 .5s ease-out}
 @keyframes fl2{0%{opacity:.95}100%{opacity:0}}
 #fs{position:fixed;right:1vmin;bottom:1vmin;z-index:4;font-size:3vmin;background:none;border:0;color:#fff;opacity:.25;cursor:pointer}
-.s-attract #title,.s-attract #prompt{display:block}
+.s-attract #title{display:block}
+.s-attract #start-ui{display:flex}
 </style></head>
 <body class="s-attract">
 <canvas id="gl"></canvas>
 <div id="title" class="o"><span>MARBLE</span><span>RUSH</span></div>
-<div id="prompt" class="o sh">STEP IN FRONT OF CAMERA TO PLAY</div>
+<div id="start-ui"><div id="prompt" class="sh">STEP IN FRONT OF CAMERA &amp; PRESS START</div><button id="start-btn" class="big" type="button">START GAME</button></div>
 <canvas id="cam" width="320" height="240"></canvas><div id="note"></div>
 <div id="hud">
  <div id="top" class="o sh"><div id="timer">00:00.00</div><div id="cpc">1 / 10</div></div>
@@ -447,7 +450,7 @@ $('qr-retry').onclick=()=>{touchEmailTimer();uploadSnapshot()};
 
 function loadB(){try{const b=JSON.parse(localStorage.getItem('marbleRushTop10'));if(Array.isArray(b))return b.slice(0,10)}catch(e){}return[]}
 function saveB(){try{localStorage.setItem('marbleRushTop10',JSON.stringify(board))}catch(e){}}
-function toAttract(arm){phPhase=null;resetShareUI();emailVal='';renderEmailDisp();G=newG();archColors(0);$('modal').style.display='';lastSeen=now;pz.hold=null;armed=arm;absentT=0;cn=-1;setState('attract');$('prompt').textContent='STEP IN FRONT OF CAMERA TO PLAY'}
+function toAttract(arm){phPhase=null;resetShareUI();emailVal='';renderEmailDisp();G=newG();archColors(0);$('modal').style.display='';lastSeen=now;pz.hold=null;armed=arm;absentT=0;cn=-1;setState('attract');$('prompt').textContent='STEP IN FRONT OF CAMERA & PRESS START'}
 function startCount(){if(st!=='attract')return;G=newG();archColors(0);lastSeen=now;setState('count');cn=-1}
 function pop(el,txt){el.textContent=txt;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
 
@@ -491,6 +494,7 @@ $('phdl').onclick=()=>{fT_=0;const a=document.createElement('a');a.href=$('phc')
 /* ---------- INPUT ---------- */
 function fs(){const e=document.documentElement;if(!document.fullscreenElement&&e.requestFullscreen)e.requestFullscreen().catch(()=>{})}
 $('fs').onclick=e=>{e.stopPropagation();fs();A.init()};
+$('start-btn').onclick=e=>{e.stopPropagation();A.init();fs();startCount()};
 addEventListener('click',()=>{A.init();if(st==='attract')fs()});
 addEventListener('keydown',e=>{
  if(e.target.id==='nm'){fT_=0;if(e.key==='Enter')submit();return}
@@ -554,9 +558,8 @@ function update(dt){
  wave(now);
  if(st==='attract'){
   const p=present();
-  if(!p){absentT+=dt;if(absentT>1.5)armed=true;pz.hold=null}else absentT=0;
-  if(p&&armed&&pz.hold!=null){const h=now-pz.hold;$('prompt').textContent=h<2?'HOLD STEADY... '+(2-h).toFixed(1):'GET READY!';if(h>=2){A.init();startCount()}}
-  else $('prompt').textContent='STEP IN FRONT OF CAMERA TO PLAY'}
+  $('prompt').textContent=p?'PLAYER READY \u2022 PRESS START TO PLAY':'STEP IN FRONT OF CAMERA & PRESS START';
+ }
  else if(st==='count'){sT+=dt;G.base=pz.raw;const n=Math.floor(sT);
   if(n!==cn){cn=n;if(n<3){pop($('count'),3-n);A.beep(false)}else{pop($('count'),'GO!');A.beep(true);setState('race');G.base=pz.raw}}
   if(present())lastSeen=now}
