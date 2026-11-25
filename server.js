@@ -568,6 +568,14 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
+app.get('/firebase-applet-config.json', (_req, res) => {
+  const cfgPath = path.join(__dirname, 'firebase-applet-config.json');
+  if (!fs.existsSync(cfgPath)) {
+    return res.status(404).json({ error: 'Firebase configuration not found.' });
+  }
+  return res.sendFile(cfgPath);
+});
+
 app.get('/', (_req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });

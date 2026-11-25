@@ -1,0 +1,34 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "A single global Top 10 arcade race score in Marble Rush.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10,
+          "pattern": "^[A-Z0-9 ]{1,10}$",
+          "description": "Uppercase player display name (1 to 10 characters, A-Z, 0-9, or space)."
+        },
+        "time": {
+          "type": "number",
+          "description": "Final race time in seconds (between 5 and 3600)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the score was recorded."
+        }
+      },
+      "required": ["name", "time", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/leaderboard/{entryId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Public global Marble Rush Top 10 leaderboard scores (append-only, no PII)."
+    }
+  }
+}

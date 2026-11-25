@@ -171,7 +171,7 @@ text-shadow:0 1px #0cc,0 2px #0bb,0 3px #0aa,0 4px #099,0 5px #088,0 6px #077,0 
    </div>
   </div>
  </div>
- <div id="bd"><h2>TOP 10 LEADERBOARD</h2><ol id="lb"></ol><button class="big" id="again">PLAY AGAIN</button><div id="cd"></div></div>
+ <div id="bd"><h2>GLOBAL TOP 10 LEADERBOARD</h2><ol id="lb"></ol><button class="big" id="again">PLAY AGAIN</button><div id="cd"></div></div>
 </div></div>
 <div id="flash"></div><button id="fs" title="Fullscreen">&#x26F6;</button>
 
@@ -448,22 +448,26 @@ $('em-clr').onclick=()=>{touchEmailTimer();emailVal='';renderEmailDisp();setEmai
 $('em-send').onclick=sendEmailPhoto;
 $('qr-retry').onclick=()=>{touchEmailTimer();uploadSnapshot()};
 
+let cloudReady=false,myEntryId=null,fbSaveScore=null;
 function loadB(){try{const b=JSON.parse(localStorage.getItem('marbleRushTop10'));if(Array.isArray(b))return b.slice(0,10)}catch(e){}return[]}
 function saveB(){try{localStorage.setItem('marbleRushTop10',JSON.stringify(board))}catch(e){}}
+function renderBoard(me){
+ $('lb').innerHTML=Array.from({length:10},(_,i)=>{const e=board[i];const isMe=e&&(myEntryId?e.id===myEntryId:i===me);return e?`<li class="${isMe?'me':''}"><span>${i+1}</span><span>${e.n.replace(/</g,'')}</span><span>${fmt(e.t)}</span></li>`:`<li class="em"><span>${i+1}</span><span>---</span><span>--:--.--</span></li>`}).join('');
+}
 function toAttract(arm){phPhase=null;resetShareUI();emailVal='';renderEmailDisp();G=newG();archColors(0);$('modal').style.display='';lastSeen=now;pz.hold=null;armed=arm;absentT=0;cn=-1;setState('attract');$('prompt').textContent='STEP IN FRONT OF CAMERA & PRESS START'}
 function startCount(){if(st!=='attract')return;G=newG();archColors(0);lastSeen=now;setState('count');cn=-1}
 function pop(el,txt){el.textContent=txt;el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}
 
 /* ---------- FINISH / LEADERBOARD ---------- */
 function showModal(){
- setState('finish');fT_=0;board=loadB();const t=G.finT;rank=board.filter(e=>e.t<t).length+1;
+ setState('finish');fT_=0;if(!cloudReady)board=loadB();const t=G.finT;rank=board.filter(e=>e.t<t).length+1;
  $('ft').textContent=fmt(t);$('rk').textContent=rank<=10?'RANK #'+rank:'NOT IN THE TOP 10 THIS TIME';
- pName='PLAYER';meIdx=-1;emailVal='';renderEmailDisp();resetShareUI();
+ pName='PLAYER';meIdx=-1;myEntryId=null;emailVal='';renderEmailDisp();resetShareUI();
  if(rank<=10){$('card').className='m-rec';$('nm').value='';setTimeout(()=>$('nm').focus(),50)}else askPhoto()}
 function showBoard(me){
  emailSending=false;uploadSeq++;
- $('card').className='m-bd';$('lb').innerHTML=Array.from({length:10},(_,i)=>{const e=board[i];return e?`<li class="${i===me?'me':''}"><span>${i+1}</span><span>${e.n.replace(/</g,'')}</span><span>${fmt(e.t)}</span></li>`:`<li class="em"><span>${i+1}</span><span>---</span><span>--:--.--</span></li>`}).join('');fT_=0}
-function submit(){if(st!=='finish'||$('card').className!=='m-rec')return;const n=$('nm').value.trim()||'PLAYER';board.splice(rank-1,0,{n,t:G.finT});board=board.slice(0,10);saveB();pName=n;meIdx=rank-1;askPhoto()}
+ $('card').className='m-bd';renderBoard(me);fT_=0}
+function submit(){if(st!=='finish'||$('card').className!=='m-rec')return;const rawN=$('nm').value.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().slice(0,10);const n=rawN||'PLAYER';const cleanTime=Number(G.finT.toFixed(2));myEntryId=null;const entry={n,t:cleanTime};board.splice(rank-1,0,entry);board.sort((a,b)=>a.t-b.t);board=board.slice(0,10);saveB();pName=n;meIdx=board.indexOf(entry);if(fbSaveScore)fbSaveScore(n,cleanTime,entry).catch(err=>console.warn('Global leaderboard write error:',err));askPhoto()}
 function askPhoto(){if(!camOK){showBoard(meIdx);return}$('card').className='m-ph';fT_=0}
 function startSnap(){resetShareUI();phPhase='sn';phT=0;phLast=0;fT_=0;$('card').className='m-sn'}
 function drawPhoto(num){
@@ -581,5 +585,89 @@ function update(dt){
   $('lean').querySelector('i').style.left=(50+G.steer*46)+'%';$('nit').firstChild.style.width=(G.nitro*100)+'%';$('nit').classList.toggle('on',G.nitroOn>0)}}
 function loop(){requestAnimationFrame(loop);const n=performance.now(),dt=Math.min(.05,(n/1000-now)||.016);now=n/1000;poseStep();update(dt);renderer.render(scene,cam3)}
 board=loadB();archColors(0);initCam();loop();
+
+/* ---------- GLOBAL FIREBASE LEADERBOARD ---------- */
+(async function initCloudLeaderboard(){
+ const OperationType={CREATE:'create',UPDATE:'update',DELETE:'delete',LIST:'list',GET:'get',WRITE:'write'};
+ function handleFirestoreError(error,operationType,path){
+  const errInfo={
+   error:error instanceof Error?error.message:String(error),
+   authInfo:{userId:null,email:null,emailVerified:null,isAnonymous:null,tenantId:null,providerInfo:[]},
+   operationType,
+   path
+  };
+  console.error('Firestore Error: ',JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+ }
+ try{
+  const cfgRes=await fetch('/firebase-applet-config.json');
+  if(!cfgRes.ok)return;
+  const firebaseConfig=await cfgRes.json();
+  if(!firebaseConfig||!firebaseConfig.projectId||!firebaseConfig.apiKey)return;
+  const [{initializeApp},{getFirestore,collection,doc,getDocFromServer,getDocs,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp}]=await Promise.all([
+   import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js'),
+   import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js')
+  ]);
+  const fbApp=initializeApp(firebaseConfig);
+  const db=getFirestore(fbApp,firebaseConfig.firestoreDatabaseId);
+  async function testConnection(){
+   try{
+    await getDocFromServer(doc(db,'test','connection'));
+   }catch(error){
+    if(error instanceof Error&&error.message.includes('the client is offline')){
+     console.error('Please check your Firebase configuration.');
+    }
+   }
+  }
+  await testConnection();
+
+  const lbPath='leaderboard';
+  const topQuery=query(collection(db,lbPath),orderBy('time','asc'),limit(10));
+  const applySnapshot=snap=>{
+   const rows=[];
+   snap.forEach(d=>{
+    const data=d.data();
+    if(data&&typeof data.name==='string'&&typeof data.time==='number'){
+     rows.push({id:d.id,n:data.name,t:data.time});
+    }
+   });
+   board=rows.slice(0,10);
+   cloudReady=true;
+   saveB();
+   if(st==='finish'&&$('card').className==='m-bd')renderBoard(meIdx);
+  };
+
+  try{
+   const initialSnap=await getDocs(topQuery);
+   applySnapshot(initialSnap);
+  }catch(err){
+   handleFirestoreError(err,OperationType.LIST,lbPath);
+  }
+
+  onSnapshot(topQuery,applySnapshot,err=>{
+   handleFirestoreError(err,OperationType.LIST,lbPath);
+  });
+
+  fbSaveScore=async(name,timeSec,localEntry)=>{
+   const safeName=String(name||'PLAYER').toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim().slice(0,10)||'PLAYER';
+   const safeTime=Number(Number(timeSec).toFixed(2));
+   if(!Number.isFinite(safeTime)||safeTime<5||safeTime>3600)return;
+   try{
+    const docRef=await addDoc(collection(db,lbPath),{
+     name:safeName,
+     time:safeTime,
+     createdAt:serverTimestamp()
+    });
+    myEntryId=docRef.id;
+    if(localEntry)localEntry.id=docRef.id;
+    if(st==='finish'&&$('card').className==='m-bd')renderBoard(meIdx);
+   }catch(err){
+    handleFirestoreError(err,OperationType.CREATE,lbPath);
+   }
+  };
+ }catch(err){
+  console.warn('Cloud leaderboard unavailable, using local fallback:',err);
+ }
+})();
 </script>
 </body></html>

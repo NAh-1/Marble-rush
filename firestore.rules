@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll(['name', 'time', 'createdAt'])
+        && data.keys().hasOnly(['name', 'time', 'createdAt'])
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 10
+        && data.name.matches('^[A-Z0-9 ]{1,10}$')
+        && data.name.trim().size() >= 1
+        && data.time is number
+        && data.time >= 5
+        && data.time <= 3600
+        && data.createdAt is timestamp
+        && data.createdAt == request.time;
+    }
+
+    // Public global arcade leaderboard (no PII, append-only, bounded queries)
+    match /leaderboard/{entryId} {
+      allow get: if isValidId(entryId);
+      allow list: if request.query.limit <= 25
+        && resource.data.name is string
+        && resource.data.time is number;
+      allow create: if isValidId(entryId)
+        && isValidLeaderboardEntry(incoming());
+      allow update, delete: if false;
+    }
+  }
+}
