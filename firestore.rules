@@ -32,9 +32,9 @@ service cloud.firestore {
     // Public global arcade leaderboard (no PII, append-only, bounded queries)
     match /leaderboard/{entryId} {
       allow get: if isValidId(entryId);
-      allow list: if request.query.limit <= 25
-        && resource.data.name is string
-        && resource.data.time is number;
+      allow list: if request.query.limit is int
+        && request.query.limit <= 25
+        && resource.data.time >= 5;
       allow create: if isValidId(entryId)
         && isValidLeaderboardEntry(incoming());
       allow update, delete: if false;

@@ -604,7 +604,7 @@ board=loadB();archColors(0);initCam();loop();
   if(!cfgRes.ok)return;
   const firebaseConfig=await cfgRes.json();
   if(!firebaseConfig||!firebaseConfig.projectId||!firebaseConfig.apiKey)return;
-  const [{initializeApp},{getFirestore,collection,doc,getDocFromServer,getDocs,addDoc,query,orderBy,limit,onSnapshot,serverTimestamp}]=await Promise.all([
+  const [{initializeApp},{getFirestore,collection,doc,getDocFromServer,getDocs,addDoc,query,where,orderBy,limit,onSnapshot,serverTimestamp}]=await Promise.all([
    import('https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js'),
    import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js')
   ]);
@@ -622,7 +622,7 @@ board=loadB();archColors(0);initCam();loop();
   await testConnection();
 
   const lbPath='leaderboard';
-  const topQuery=query(collection(db,lbPath),orderBy('time','asc'),limit(10));
+  const topQuery=query(collection(db,lbPath),where('time','>=',5),orderBy('time','asc'),limit(10));
   const applySnapshot=snap=>{
    const rows=[];
    snap.forEach(d=>{
